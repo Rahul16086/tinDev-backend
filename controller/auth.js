@@ -17,30 +17,65 @@ exports.signup = async (req, res, next) => {
     const password = req.body.password;
     const name = req.body.name;
     const age = req.body.age;
-    const location = req.body.location;
-    const remoteAvailability = req.body.remoteAvailability;
-    const lookingFor = req.body.lookingFor;
-    const ageGroup = req.body.ageGroup;
-    const experienceLevel = req.body.experienceLevel;
-    const matchRadius = req.body.matchRadius;
     const hashedPassword = await bcrypt.hash(password, 12);
     const user = new User({
       name: name,
       email: email,
       phoneNumber: phone,
       password: hashedPassword,
-      // location: location,
       age: age,
-      // remoteAvailability: remoteAvailability,
-      // lookingFor: lookingFor,
-      // ageGroup: ageGroup,
-      // experienceLevel: experienceLevel,
-      // matchRadius: matchRadius,
     });
 
     const saved = await user.save();
     if (saved) {
       res.status(201).json({ message: "User created", userId: saved._id });
+    }
+  } catch (err) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
+};
+
+exports.signupTwo = async (req, res, next) => {
+  try {
+    const location = req.body.location;
+    const remoteAvailability = req.body.remoteAvailability;
+    const lookingFor = req.body.lookingFor;
+    const experienceLevel = req.body.experienceLevel;
+    const matchRadius = req.body.matchRadius;
+    const github = req.body.github;
+    const portfolio = req.body.portfolio;
+    const linkedIn = req.body.linkedIn;
+    const summary = req.body.summary;
+    const userId = req.body.userId;
+
+    const user = await User.findById(userId);
+
+    console.log("⚡: ", user);
+    if (!user) {
+      const error = new Error("User with this User-ID cannot be found.");
+      error.statusCode = 401;
+      throw error;
+    }
+    user.location = location;
+    user.remoteAvailability = remoteAvailability;
+    user.lookingFor = lookingFor;
+    user.experienceLevel = experienceLevel;
+    user.matchRadius = matchRadius;
+    user.links = {
+      github: github,
+      portfolio: portfolio,
+      linkedIn: linkedIn,
+    };
+    user.summary = summary;
+
+    const result = await user.save();
+
+    if (result) {
+      console.log("Details updated!!");
+      res.json({ message: "Details of the user updated" });
     }
   } catch (err) {
     if (!err.statusCode) {
@@ -57,6 +92,14 @@ exports.login = async (req, res, next) => {
   let loadedUser;
 
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const error = new Error("Validation failed");
+      error.statusCode = 422;
+      error.data = errors.array();
+      throw error;
+    }
+
     const user = await User.findOne({ email: email });
     if (!user) {
       const error = new Error("User with this E-Mail cannot be found.");
@@ -75,7 +118,7 @@ exports.login = async (req, res, next) => {
         email: loadedUser.email,
         userId: loadedUser._id.toString(),
       },
-      "secret",
+      process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
     res.status(200).json({ token: token, userId: loadedUser._id.toString() });

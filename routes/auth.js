@@ -24,6 +24,15 @@ router.put(
   authController.signup
 );
 
-router.post("/login", authController.login);
+router.put("/signupTwo", authController.signupTwo);
+
+router.post(
+  "/login",
+  [
+    body("email").isEmail().normalizeEmail(),
+    body("password").trim().isLength({ min: 6 }).not().isEmpty(),
+  ],
+  authController.login
+);
 
 module.exports = router;

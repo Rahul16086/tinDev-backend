@@ -40,7 +40,12 @@ const userSchema = new Schema({
   matchRadius: {
     type: Number,
   },
-
+  links: {
+    github: String,
+    portfolio: String,
+    linkedIn: String,
+  },
+  summary: String,
   matches: [
     {
       type: Schema.Types.ObjectId,
