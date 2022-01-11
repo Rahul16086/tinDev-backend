@@ -3,6 +3,17 @@ const { validationResult } = require("express-validator");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
+const tokenGenerator = (email, userId) => {
+  return jwt.sign(
+    {
+      email: email,
+      userId: userId,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: "1h" }
+  );
+};
+
 exports.signup = async (req, res, next) => {
   try {
     const errors = validationResult(req);
@@ -28,7 +39,10 @@ exports.signup = async (req, res, next) => {
 
     const saved = await user.save();
     if (saved) {
-      res.status(201).json({ message: "User created", userId: saved._id });
+      const token = tokenGenerator(saved.email, saved._id.toString());
+      res
+        .status(201)
+        .json({ message: "User created", userId: saved._id, token: token });
     }
   } catch (err) {
     if (!err.statusCode) {
@@ -40,7 +54,10 @@ exports.signup = async (req, res, next) => {
 
 exports.signupTwo = async (req, res, next) => {
   try {
+    console.log(req.body);
     const location = req.body.location;
+    const designation = req.body.designation;
+    const experience = req.body.experience;
     const remoteAvailability = req.body.remoteAvailability;
     const lookingFor = req.body.lookingFor;
     const experienceLevel = req.body.experienceLevel;
@@ -48,11 +65,12 @@ exports.signupTwo = async (req, res, next) => {
     const github = req.body.github;
     const portfolio = req.body.portfolio;
     const linkedIn = req.body.linkedIn;
+    const skills = req.body.skills;
     const summary = req.body.summary;
     const userId = req.body.userId;
 
     const user = await User.findById(userId);
-
+    console.log(skills);
     console.log("⚡: ", user);
     if (!user) {
       const error = new Error("User with this User-ID cannot be found.");
@@ -60,16 +78,19 @@ exports.signupTwo = async (req, res, next) => {
       throw error;
     }
     user.location = location;
-    user.remoteAvailability = remoteAvailability;
-    user.lookingFor = lookingFor;
-    user.experienceLevel = experienceLevel;
-    user.matchRadius = matchRadius;
+    user.designation = designation;
+    user.experience = experience;
     user.links = {
       github: github,
       portfolio: portfolio,
       linkedIn: linkedIn,
     };
+    user.skills.push(skills.split(",").map((skill) => skill.trim()));
     user.summary = summary;
+    user.lookingFor = lookingFor;
+    user.remoteAvailability = remoteAvailability;
+    user.experienceLevel = experienceLevel;
+    user.matchRadius = matchRadius;
 
     const result = await user.save();
 
@@ -113,14 +134,8 @@ exports.login = async (req, res, next) => {
       error.statusCode = 401;
       throw error;
     }
-    const token = jwt.sign(
-      {
-        email: loadedUser.email,
-        userId: loadedUser._id.toString(),
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
-    );
+
+    const token = tokenGenerator(loadedUser.email, loadedUser._id.toString());
     res.status(200).json({ token: token, userId: loadedUser._id.toString() });
   } catch (err) {
     if (!err.statusCode) {

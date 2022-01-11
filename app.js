@@ -4,6 +4,7 @@ const bodyParser = require("body-parser");
 
 const matchMakerRoutes = require("./routes/matchMaker");
 const authRoutes = require("./routes/auth");
+const profileRoutes = require("./routes/profile");
 
 const MONGODB_URI = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@cluster0.wkmpp.mongodb.net/${process.env.MONGO_DATABASE}?retryWrites=true&w=majority`;
 const app = express();
@@ -23,6 +24,7 @@ app.use((req, res, next) => {
 
 app.use("/app", matchMakerRoutes);
 app.use("/auth", authRoutes);
+app.use("/profile", profileRoutes);
 
 app.use((error, res, next) => {
   console.log(error);

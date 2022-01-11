@@ -4,6 +4,6 @@ const matchesController = require("../controller/matchMaker");
 
 const router = express.Router();
 
-router.get("/profile", matchesController.getMatches);
+router.get("/matchmaker", matchesController.getMatches);
 
 module.exports = router;

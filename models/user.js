@@ -21,6 +21,12 @@ const userSchema = new Schema({
   location: {
     type: String,
   },
+  designation: {
+    type: String,
+  },
+  experience: {
+    type: String,
+  },
   age: {
     type: Number,
     required: true,
@@ -45,6 +51,7 @@ const userSchema = new Schema({
     portfolio: String,
     linkedIn: String,
   },
+  skills: [],
   summary: String,
   matches: [
     {
