@@ -14,6 +14,12 @@ const tokenGenerator = (email, userId) => {
   );
 };
 
+const verifyToken = (token) => {
+  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  console.log(decoded);
+  return decoded;
+};
+
 exports.signup = async (req, res, next) => {
   try {
     const errors = validationResult(req);
@@ -70,8 +76,7 @@ exports.signupTwo = async (req, res, next) => {
     const userId = req.body.userId;
 
     const user = await User.findById(userId);
-    console.log(skills);
-    console.log("⚡: ", user);
+
     if (!user) {
       const error = new Error("User with this User-ID cannot be found.");
       error.statusCode = 401;
@@ -136,6 +141,8 @@ exports.login = async (req, res, next) => {
     }
 
     const token = tokenGenerator(loadedUser.email, loadedUser._id.toString());
+    const verification = verifyToken(token);
+
     res.status(200).json({ token: token, userId: loadedUser._id.toString() });
   } catch (err) {
     if (!err.statusCode) {
