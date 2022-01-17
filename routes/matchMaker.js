@@ -6,4 +6,6 @@ const router = express.Router();
 
 router.get("/matchmaker", matchesController.getMatches);
 
+router.put("/matchmaker/add-match", matchesController.addMatch);
+
 module.exports = router;
