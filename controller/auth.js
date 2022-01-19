@@ -60,7 +60,6 @@ exports.signup = async (req, res, next) => {
 
 exports.signupTwo = async (req, res, next) => {
   try {
-    console.log(req.body);
     const location = req.body.location;
     const designation = req.body.designation;
     const experience = req.body.experience;
@@ -101,7 +100,7 @@ exports.signupTwo = async (req, res, next) => {
 
     if (result) {
       console.log("Details updated!!");
-      res.json({ message: "Details of the user updated" });
+      res.status(200).json({ message: "Details of the user updated" });
     }
   } catch (err) {
     if (!err.statusCode) {
