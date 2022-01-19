@@ -4,8 +4,10 @@ const matchesController = require("../controller/matchMaker");
 
 const router = express.Router();
 
-router.get("/matchmaker", matchesController.getMatches);
+const isAuth = require("../middleware/is-auth");
 
-router.put("/matchmaker/add-match", matchesController.addMatch);
+router.get("/matchmaker", isAuth, matchesController.getMatches);
+
+router.put("/matchmaker/add-match", isAuth, matchesController.addMatch);
 
 module.exports = router;

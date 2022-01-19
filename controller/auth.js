@@ -15,9 +15,7 @@ const tokenGenerator = (email, userId) => {
 };
 
 const verifyToken = (token) => {
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
-  console.log(decoded);
-  return decoded;
+  return jwt.verify(token, process.env.JWT_SECRET);
 };
 
 exports.signup = async (req, res, next) => {
@@ -141,8 +139,28 @@ exports.login = async (req, res, next) => {
 
     const token = tokenGenerator(loadedUser.email, loadedUser._id.toString());
     const verification = verifyToken(token);
+    if (verification) {
+      res.status(200).json({ token: token, userId: loadedUser._id.toString() });
+    }
+  } catch (err) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
+};
 
-    res.status(200).json({ token: token, userId: loadedUser._id.toString() });
+exports.forgetPassword = async (req, res, next) => {
+  const email = req.body.email;
+
+  try {
+    const user = await User.findOne({ email: email });
+
+    if (!user) {
+      const error = new Error("Invalid E-Mail");
+      error.statusCode(401);
+      throw error;
+    }
   } catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500;
