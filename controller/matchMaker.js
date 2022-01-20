@@ -6,7 +6,7 @@ exports.getMatches = async (req, res, next) => {
     const matches = await User.find();
     const currentUser = [];
     let filteredMatches;
-    let finalFilter;
+    let finalFilter = [];
     const leftPaneMatches = [];
 
     if (matches.length > 0) {
@@ -20,14 +20,20 @@ exports.getMatches = async (req, res, next) => {
     }
 
     if (currentUser.length > 0) {
-      if (currentUser[0].matches?.length > 0) {
+      if (
+        currentUser[0].matches?.length > 0 ||
+        currentUser[0].rejections?.length > 0
+      ) {
         finalFilter = filteredMatches.filter((data) => {
-          if (currentUser[0].matches?.indexOf(data._id.toString()) === -1) {
+          if (
+            currentUser[0].rejections.indexOf(data._id.toString()) === -1 &&
+            currentUser[0].matches.indexOf(data._id.toString()) === -1
+          ) {
             return data;
           }
         });
 
-        currentUser[0].matches.forEach((matchId) => {
+        currentUser[0].matches?.forEach((matchId) => {
           matches.forEach((match) => {
             if (matchId.toString() === match._id.toString()) {
               leftPaneMatches.push({
@@ -42,6 +48,7 @@ exports.getMatches = async (req, res, next) => {
       }
     }
 
+    console.log("Final Matches: " + finalFilter?.length);
     res.status(200).json({
       cardData: finalFilter,
       leftPane: leftPaneMatches,
@@ -54,10 +61,11 @@ exports.getMatches = async (req, res, next) => {
   }
 };
 
-exports.addMatch = async (req, res, next) => {
+exports.actionsMatchMaker = async (req, res, next) => {
   try {
     const userId = req.body.userId;
-    const matchUserId = req.body.matchUserId;
+    const matchUserId = req.body.finalAction.matchUserId;
+    const rejectUserId = req.body.finalAction.rejectUserId;
     const user = await User.findById(userId);
 
     if (!user) {
@@ -66,18 +74,34 @@ exports.addMatch = async (req, res, next) => {
       throw error;
     }
 
-    if (user.matches.indexOf(matchUserId) !== -1) {
-      const error = new Error("Already matched");
-      error.statusCode = 401;
-      throw error;
+    if (matchUserId) {
+      if (user.matches.indexOf(matchUserId) !== -1) {
+        const error = new Error("Already matched");
+        error.statusCode = 401;
+        throw error;
+      }
+
+      user.matches.push(matchUserId);
+      const result = await user.save();
+
+      if (result) {
+        res.json({ message: "Match added" });
+      }
     }
 
-    user.matches.push(matchUserId);
-    const result = await user.save();
+    if (rejectUserId) {
+      if (user.rejections.indexOf(rejectUserId) !== -1) {
+        const error = new Error("Reject added already");
+        error.statusCode = 401;
+        throw error;
+      }
 
-    if (result) {
-      console.log("Matches updated!!");
-      res.json({ message: "Match added" });
+      user.rejections.push(rejectUserId);
+      const result = await user.save();
+
+      if (result) {
+        res.json({ message: "Reject added" });
+      }
     }
   } catch (err) {
     if (!err.statusCode) {

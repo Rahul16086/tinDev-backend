@@ -59,6 +59,12 @@ const userSchema = new Schema({
       ref: "User",
     },
   ],
+  rejections: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+  ],
   messages: [{}],
 });
 

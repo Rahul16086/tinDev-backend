@@ -8,6 +8,10 @@ const isAuth = require("../middleware/is-auth");
 
 router.get("/matchmaker", isAuth, matchesController.getMatches);
 
-router.put("/matchmaker/add-match", isAuth, matchesController.addMatch);
+router.put(
+  "/matchmaker/add-match",
+  isAuth,
+  matchesController.actionsMatchMaker
+);
 
 module.exports = router;
