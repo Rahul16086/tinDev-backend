@@ -4,8 +4,21 @@ exports.getUserData = async (req, res, next) => {
   const userId = req.params.userId;
   try {
     const user = await User.findById(userId);
+    const allUsers = await User.find();
+    const favorites = [];
+
     if (user) {
-      res.json({ user: user });
+      user.favorites?.forEach((matchId) => {
+        allUsers?.forEach((user) => {
+          if (matchId.toString() === user._id.toString()) {
+            favorites.push({
+              name: user.name,
+              _id: user._id.toString(),
+            });
+          }
+        });
+      });
+      res.json({ user: user, favorites: favorites });
     }
   } catch (err) {
     if (!err.statusCode) {

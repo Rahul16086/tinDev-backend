@@ -26,7 +26,7 @@ app.use("/app", matchMakerRoutes);
 app.use("/auth", authRoutes);
 app.use("/profile", profileRoutes);
 
-app.use((error, res, next) => {
+app.use((error, rep, res, next) => {
   console.log(error);
   const status = error.statusCode || 500;
   const message = error.message;

@@ -66,6 +66,7 @@ exports.actionsMatchMaker = async (req, res, next) => {
     const userId = req.body.userId;
     const matchUserId = req.body.finalAction.matchUserId;
     const rejectUserId = req.body.finalAction.rejectUserId;
+    const favoritesUserId = req.body.finalAction.favoriteUserId;
     const user = await User.findById(userId);
 
     if (!user) {
@@ -85,7 +86,7 @@ exports.actionsMatchMaker = async (req, res, next) => {
       const result = await user.save();
 
       if (result) {
-        res.json({ message: "Match added" });
+        res.json({ message: "Match added", action: "Reload" });
       }
     }
 
@@ -100,7 +101,22 @@ exports.actionsMatchMaker = async (req, res, next) => {
       const result = await user.save();
 
       if (result) {
-        res.json({ message: "Reject added" });
+        res.json({ message: "Reject added", action: "Reload" });
+      }
+    }
+
+    if (favoritesUserId) {
+      if (user.favorites.indexOf(favoritesUserId) !== -1) {
+        const error = new Error("Favorite added already");
+        error.statusCode = 401;
+        throw error;
+      }
+
+      user.favorites.push(favoritesUserId);
+      const result = await user.save();
+
+      if (result) {
+        res.json({ message: "Favorite added" });
       }
     }
   } catch (err) {
