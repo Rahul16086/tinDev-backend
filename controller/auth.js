@@ -2,6 +2,8 @@ const User = require("../models/user");
 const { validationResult } = require("express-validator");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const sendEmail = require("../utils/sendEmail");
+const crypto = require("crypto");
 
 const tokenGenerator = (email, userId) => {
   return jwt.sign(
@@ -18,6 +20,9 @@ const verifyToken = (token) => {
   return jwt.verify(token, process.env.JWT_SECRET);
 };
 
+const hashedPassword = async (password) => {
+  return await bcrypt.hash(password, 12);
+};
 exports.signup = async (req, res, next) => {
   try {
     const errors = validationResult(req);
@@ -32,12 +37,12 @@ exports.signup = async (req, res, next) => {
     const password = req.body.password;
     const name = req.body.name;
     const age = req.body.age;
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const passwordFinal = await hashedPassword(password);
     const user = new User({
       name: name,
       email: email,
       phoneNumber: phone,
-      password: hashedPassword,
+      password: passwordFinal,
       age: age,
     });
 
@@ -161,6 +166,67 @@ exports.forgetPassword = async (req, res, next) => {
       error.statusCode(401);
       throw error;
     }
+
+    const resetToken = user.getResetPasswordToken();
+    await user.save();
+
+    const resetUrl = `http://localhost:3000/passwordreset/${resetToken}`;
+
+    const message = `<h1>Password Reset has been requested</h1>
+                         <p>Please click the link inorder to reset your password</p>
+                         <a href=${resetUrl}>${resetUrl}</a>`;
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: "Password Reset Request",
+        text: message,
+      });
+
+      res.status(200).json({ message: "Email sent" });
+    } catch (err) {
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+
+      await user.save();
+
+      const error = new Error("Email could not be sent!");
+      error.statusCode(500);
+      throw error;
+    }
+  } catch (err) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
+};
+
+exports.resetPassword = async (req, res, next) => {
+  const paramsToken = req.params.resetToken;
+  const resetPasswordToken = crypto
+    .createHash("sha256")
+    .update(paramsToken)
+    .digest("hex");
+
+  try {
+    const user = await User.findOne({
+      resetPasswordToken,
+      resetPasswordExpire: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      const error = new Error("Invalid Reset Token");
+      error.statusCode(400);
+      throw error;
+    }
+
+    user.password = await hashedPassword(req.body.password);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+
+    await user.save();
+
+    res.status(201).json({ message: "Password reset successful" });
   } catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500;
