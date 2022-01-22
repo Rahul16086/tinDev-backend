@@ -6,6 +6,7 @@ exports.getUserData = async (req, res, next) => {
     const user = await User.findById(userId);
     const allUsers = await User.find();
     const favorites = [];
+    let skills = [];
 
     if (user) {
       user.favorites?.forEach((matchId) => {
@@ -18,7 +19,12 @@ exports.getUserData = async (req, res, next) => {
           }
         });
       });
-      res.json({ user: user, favorites: favorites });
+      if (user.skills[0].length > 6) {
+        user.skills[0] = user.skills[0].splice(0, 6);
+      } else {
+        skills = [...user.skills[0]];
+      }
+      res.json({ user: user, favorites: favorites, skills: skills });
     }
   } catch (err) {
     if (!err.statusCode) {
