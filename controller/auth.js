@@ -23,6 +23,7 @@ const verifyToken = (token) => {
 const hashedPassword = async (password) => {
   return await bcrypt.hash(password, 12);
 };
+
 exports.signup = async (req, res, next) => {
   try {
     const errors = validationResult(req);
@@ -103,7 +104,9 @@ exports.signupTwo = async (req, res, next) => {
 
     if (result) {
       console.log("Details updated!!");
-      res.status(200).json({ message: "Details of the user updated" });
+      res
+        .status(200)
+        .json({ message: "Details of the user updated", success: true });
     }
   } catch (err) {
     if (!err.statusCode) {
