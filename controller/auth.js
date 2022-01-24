@@ -239,3 +239,33 @@ exports.resetPassword = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.getVerification = (req, res, next) => {
+  try {
+    const authHeaderCheck = req.get("Authorization");
+    if (!authHeaderCheck) {
+      const error = new Error("Not Authenticated");
+      error.statusCode = 401;
+      throw error;
+    }
+    const token = authHeaderCheck.split(" ")[1];
+    let decodedToken;
+    try {
+      decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      err.statusCode = 500;
+      throw err;
+    }
+    if (!decodedToken) {
+      const error = new Error("Not Authenticated");
+      error.statusCode = 401;
+      throw error;
+    }
+    res.status(200).json({ message: "Authenticated", success: true });
+  } catch (err) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
+};
